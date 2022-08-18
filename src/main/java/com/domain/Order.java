@@ -5,20 +5,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-//import javax.persistence.*;
+import javax.persistence.*;
 import java.util.List;
 
-//@Entity
-//@Table(name = "order_table")
+@Entity
+@Table(name = "order_table")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-    //    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String orderNumber;
-    //    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL)
     private List<OrderLineItems> orderLineItems;
 }
