@@ -7,6 +7,8 @@ import com.dto.OrderDto;
 import com.dto.OrderLineItemsDto;
 import com.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +18,12 @@ import java.util.UUID;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final InventoryClient inventoryClient;
+    private final StreamBridge streamBridge;
 
     public String saveOrder(OrderDto orderDto) {
         boolean allProductsInStock = allProductsInStock(orderDto);
@@ -29,6 +33,8 @@ public class OrderService {
             List<OrderLineItems> orderLineItems = getOrderLineItems(orderDto);
             order.setOrderLineItems(orderLineItems);
             orderRepository.save(order);
+            log.info("Sending Order details to Notification Service");
+            streamBridge.send("notificationEventSupplier-out-0", order.getId());
             return "Order Placed Successfully";
         }
         return "Order Failed One of the product in the order is not in stock";
