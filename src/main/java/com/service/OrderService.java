@@ -2,6 +2,8 @@ package com.service;
 
 import com.dto.OrderDto;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface OrderService {
-    String saveOrder(OrderDto orderDto);
+    CompletableFuture<String> saveOrder(OrderDto orderDto);
 }

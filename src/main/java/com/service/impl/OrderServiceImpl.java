@@ -7,6 +7,9 @@ import com.dto.OrderDto;
 import com.dto.OrderLineItemsDto;
 import com.repository.OrderRepository;
 import com.service.OrderService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -15,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @Transactional
@@ -26,7 +31,10 @@ public class OrderServiceImpl implements OrderService {
     private final InventoryClient inventoryClient;
     private final StreamBridge streamBridge;
 
-    public String saveOrder(OrderDto orderDto) {
+    @CircuitBreaker(name = "inventory", fallbackMethod = "fallBackMethodSaveOrder")
+    @TimeLimiter(name = "inventory", fallbackMethod = "fallBackMethodSaveOrder")
+    @Retry(name = "inventory")
+    public CompletableFuture<String> saveOrder(OrderDto orderDto) {
         boolean allProductsInStock = allProductsInStock(orderDto);
         if (allProductsInStock) {
             Order order = new Order();
@@ -36,9 +44,21 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
             log.info("Sending Order details to Notification Service");
             streamBridge.send("notificationEventSupplier-out-0", order.getId());
-            return "Order Placed Successfully";
+            return CompletableFuture.supplyAsync(() -> "Order Placed Successfully");
         }
-        return "Order Failed One of the product in the order is not in stock";
+        return CompletableFuture.supplyAsync(() -> "Order Failed One of the product in the order is not in stock");
+    }
+
+    public CompletableFuture<String> fallBackMethodSaveOrder(OrderDto orderdto, RuntimeException runtimeException) {
+        return CompletableFuture.supplyAsync(() -> "fullBack method where trying to call inventory service with orderDto is tyring to save"
+                + orderdto.toString() + "and exception message"
+                + runtimeException.getMessage());
+    }
+
+    public CompletableFuture<String> fallBackMethodSaveOrderTimeOut(OrderDto orderdto, TimeoutException runtimeException) {
+        return CompletableFuture.supplyAsync(() -> "fullBack method where trying to call inventory service with orderDto is tyring to save"
+                + orderdto.toString() + "and exception message"
+                + runtimeException.getMessage());
     }
 
     private OrderLineItems mapToDto(OrderLineItemsDto orderLineItemsDto) {
