@@ -20,8 +20,8 @@ application.properties.
 
 2.2.1 For application.properties you should set the value like:
 
-server.port=${Value}
-spring.application.name=${Value}
-eureka.instance.instance-id=${Value}
-spring.cloud.loadbalancer.ribbon.enabled=${Value}
-spring.cloud.config.uri=${Value}
+* server.port=${Value}
+* spring.application.name=${Value}
+* eureka.instance.instance-id=${Value}
+* spring.cloud.loadbalancer.ribbon.enabled=${Value}
+* spring.cloud.config.uri=${Value}
