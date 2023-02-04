@@ -1,4 +1,4 @@
-                                              order_service
+                                                     order_service
 1)About the project.
 
 This is an order microservice project that communicates with an invertory microservice by openfeign and also uses circuitbreaker-resilience4j 
